@@ -20,7 +20,7 @@
 
 ## Changes made on the development branch
 
-The branch `docs/mpos-phase-zero-architecture` is 33 commits ahead of `main` and 0 commits behind at the latest comparison. The changes are isolated to this branch. It now contains:
+The branch `docs/mpos-phase-zero-architecture` contains the implementation and documentation changes on top of `main`; the changes were committed only to this branch. It now contains:
 - React + TypeScript + Vite foundation files.
 - Initial responsive DAWG 360° interface shell and navigation.
 - Browser-safe environment example.
