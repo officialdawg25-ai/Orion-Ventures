@@ -6,7 +6,8 @@ begin;
 
 insert into auth.users (id, raw_user_meta_data) values
   ('10000000-0000-4000-8000-000000000001', '{"display_name":"Test One"}'::jsonb),
-  ('20000000-0000-4000-8000-000000000002', '{"display_name":"Test Two"}'::jsonb)
+  ('20000000-0000-4000-8000-000000000002', '{"display_name":"Test Two"}'::jsonb),
+  ('50000000-0000-4000-8000-000000000005', '{"display_name":"Test Viewer"}'::jsonb)
 on conflict (id) do nothing;
 
 set role authenticated;
@@ -85,6 +86,32 @@ insert into public.portfolios (id, name, created_by) values (:'p2_id', 'Portfoli
 reset role;
 
 set role authenticated;
+select set_config('request.jwt.claim.sub', '50000000-0000-4000-8000-000000000005', false);
+savepoint before_viewer_insert;
+\\set ON_ERROR_STOP off
+insert into public.ventures (portfolio_id, name) values (:'p1_id', 'Viewer Forbidden Venture');
+\\if :ERROR
+  \\echo 'PASS: viewer cannot create ventures.'
+  rollback to savepoint before_viewer_insert;
+\\else
+  \\echo 'FAIL: viewer unexpectedly created a venture.'
+  \\quit 1
+\\endif
+\\set ON_ERROR_STOP on
+update public.venture_stage_reviews
+set status = 'approved', reviewed_by = '50000000-0000-4000-8000-000000000005', reviewed_at = now()
+where id = :'sr2_stage_review_id';
+reset role;
+select (status = 'proposed') as viewer_cannot_approve
+from public.venture_stage_reviews where id = :'sr2_stage_review_id' \\gset
+\\if :viewer_cannot_approve
+  \\echo 'PASS: viewer cannot approve a stage review.'
+\\else
+  \\echo 'FAIL: viewer changed a stage review.'
+  \\quit 1
+\\endif
+
+set role authenticated;
 select set_config('request.jwt.claim.sub', '10000000-0000-4000-8000-000000000001', false);
 select exists (select 1 from public.portfolios where id = :'p2_id') as cross_portfolio_visible \gset
 \if :cross_portfolio_visible
@@ -154,14 +181,14 @@ where n.nspname = 'public' and c.relname = 'rls_trigger_smoke_test'
 \endif
 drop table public.rls_trigger_smoke_test;
 
-select count(*) = 7 as all_application_tables_rls
+select count(*) = 9 as all_application_tables_rls
 from pg_class c join pg_namespace n on n.oid = c.relnamespace
 where n.nspname = 'public' and c.relkind = 'r'
-  and c.relname in ('profiles','portfolios','portfolio_memberships','ventures','evidence_items','decisions','audit_events')
+  and c.relname in ('profiles','portfolios','portfolio_memberships','ventures','evidence_items','decisions','audit_events','venture_stage_reviews','venture_stage_review_evidence')
   and c.relrowsecurity
 \gset
 \if :all_application_tables_rls
-  \echo 'PASS: RLS is enabled on all initial application tables.'
+  \echo 'PASS: RLS is enabled on all initial application and stage-gate tables.'
 \else
   \echo 'FAIL: one or more application tables have RLS disabled.'
   \quit 1
