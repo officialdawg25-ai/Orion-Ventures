@@ -92,7 +92,7 @@ create table if not exists public.decisions (
 
 create table if not exists public.audit_events (
   id bigint generated always as identity primary key,
-  portfolio_id uuid references public.portfolios(id) on delete set null,
+  portfolio_id uuid,
   actor_user_id uuid references auth.users(id) on delete set null,
   action text not null,
   entity_type text not null,
