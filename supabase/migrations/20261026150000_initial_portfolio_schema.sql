@@ -46,7 +46,8 @@ create table if not exists public.ventures (
   currency_code text not null default 'ZAR' check (currency_code ~ '^[A-Z]{3}$'),
   created_by uuid not null default auth.uid() references auth.users(id),
   created_at timestamptz not null default now(),
-  updated_at timestamptz not null default now()
+  updated_at timestamptz not null default now(),
+  unique (portfolio_id, id)
 );
 
 create table if not exists public.evidence_items (
@@ -64,7 +65,8 @@ create table if not exists public.evidence_items (
   created_by uuid not null default auth.uid() references auth.users(id),
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now(),
-  constraint evidence_venture_same_portfolio check (venture_id is null or portfolio_id is not null)
+  constraint evidence_venture_same_portfolio foreign key (portfolio_id, venture_id)
+    references public.ventures (portfolio_id, id) on delete set null (venture_id)
 );
 
 create table if not exists public.decisions (
@@ -81,7 +83,9 @@ create table if not exists public.decisions (
   review_at timestamptz,
   created_by uuid not null default auth.uid() references auth.users(id),
   created_at timestamptz not null default now(),
-  updated_at timestamptz not null default now()
+  updated_at timestamptz not null default now(),
+  constraint decisions_venture_same_portfolio foreign key (portfolio_id, venture_id)
+    references public.ventures (portfolio_id, id) on delete set null (venture_id)
 );
 
 create table if not exists public.audit_events (
@@ -133,6 +137,26 @@ begin
   return new;
 end;
 $function$;
+
+
+create or replace function private.prevent_immutable_record_fields()
+returns trigger
+language plpgsql
+set search_path = pg_catalog
+as $function$
+begin
+  if new.id is distinct from old.id
+     or new.created_at is distinct from old.created_at
+     or new.created_by is distinct from old.created_by
+     or new.portfolio_id is distinct from old.portfolio_id then
+    raise exception 'Record identity, creator, creation time and portfolio are immutable'
+      using errcode = '42501';
+  end if;
+  return new;
+end;
+$function$;
+
+revoke all on function private.prevent_immutable_record_fields() from public, anon, authenticated;
 
 create or replace function private.create_portfolio_owner_membership()
 returns trigger
@@ -192,6 +216,7 @@ end;
 $function$;
 
 revoke all on function private.touch_updated_at() from public, anon, authenticated;
+revoke all on function private.prevent_immutable_record_fields() from public, anon, authenticated;
 revoke all on function private.create_portfolio_owner_membership() from public, anon, authenticated;
 revoke all on function private.create_profile_for_new_user() from public, anon, authenticated;
 revoke all on function private.write_audit_event() from public, anon, authenticated;
@@ -215,6 +240,22 @@ for each row execute function private.touch_updated_at();
 drop trigger if exists decisions_touch_updated_at on public.decisions;
 create trigger decisions_touch_updated_at before update on public.decisions
 for each row execute function private.touch_updated_at();
+
+drop trigger if exists portfolios_immutable_fields on public.portfolios;
+create trigger portfolios_immutable_fields before update on public.portfolios
+for each row execute function private.prevent_immutable_record_fields();
+
+drop trigger if exists ventures_immutable_fields on public.ventures;
+create trigger ventures_immutable_fields before update on public.ventures
+for each row execute function private.prevent_immutable_record_fields();
+
+drop trigger if exists evidence_items_immutable_fields on public.evidence_items;
+create trigger evidence_items_immutable_fields before update on public.evidence_items
+for each row execute function private.prevent_immutable_record_fields();
+
+drop trigger if exists decisions_immutable_fields on public.decisions;
+create trigger decisions_immutable_fields before update on public.decisions
+for each row execute function private.prevent_immutable_record_fields();
 
 drop trigger if exists portfolios_create_owner_membership on public.portfolios;
 create trigger portfolios_create_owner_membership after insert on public.portfolios
@@ -253,14 +294,27 @@ revoke all on public.profiles, public.portfolios, public.portfolio_memberships,
   public.ventures, public.evidence_items, public.decisions, public.audit_events
 from anon, authenticated;
 
-grant select, update on public.profiles to authenticated;
-grant select, insert on public.portfolios to authenticated;
+grant select on public.profiles to authenticated;
+grant update (display_name) on public.profiles to authenticated;
+grant select on public.portfolios to authenticated;
+grant insert (name, created_by, base_currency) on public.portfolios to authenticated;
 grant select on public.portfolio_memberships to authenticated;
-grant select, insert, update on public.ventures to authenticated;
-grant select, insert, update on public.evidence_items to authenticated;
-grant select, insert, update on public.decisions to authenticated;
+grant select on public.ventures to authenticated;
+grant insert (portfolio_id, name, description, venture_type, lifecycle_stage, status, accountable_owner, currency_code, created_by)
+  on public.ventures to authenticated;
+grant update (name, description, venture_type, lifecycle_stage, status, accountable_owner, currency_code)
+  on public.ventures to authenticated;
+grant select on public.evidence_items to authenticated;
+grant insert (portfolio_id, venture_id, title, evidence_type, source_url, source_reference, observed_at, confidence, limitations, created_by)
+  on public.evidence_items to authenticated;
+grant update (venture_id, title, evidence_type, source_url, source_reference, observed_at, confidence, limitations)
+  on public.evidence_items to authenticated;
+grant select on public.decisions to authenticated;
+grant insert (portfolio_id, venture_id, title, decision_type, rationale, alternatives_considered, status, decided_by, decided_at, review_at, created_by)
+  on public.decisions to authenticated;
+grant update (venture_id, title, decision_type, rationale, alternatives_considered, status, decided_by, decided_at, review_at)
+  on public.decisions to authenticated;
 grant select on public.audit_events to authenticated;
-grant usage, select on sequence public.audit_events_id_seq to authenticated;
 
 drop policy if exists profiles_select_self on public.profiles;
 create policy profiles_select_self on public.profiles for select to authenticated
@@ -300,10 +354,7 @@ with check (
 drop policy if exists ventures_update_editor on public.ventures;
 create policy ventures_update_editor on public.ventures for update to authenticated
 using (private.has_portfolio_role(portfolio_id, array['owner','admin','editor']))
-with check (
-  created_by = (select auth.uid())
-  and private.has_portfolio_role(portfolio_id, array['owner','admin','editor'])
-);
+with check (private.has_portfolio_role(portfolio_id, array['owner','admin','editor']));
 
 drop policy if exists evidence_select_member on public.evidence_items;
 create policy evidence_select_member on public.evidence_items for select to authenticated
@@ -319,10 +370,7 @@ with check (
 drop policy if exists evidence_update_editor on public.evidence_items;
 create policy evidence_update_editor on public.evidence_items for update to authenticated
 using (private.has_portfolio_role(portfolio_id, array['owner','admin','editor']))
-with check (
-  created_by = (select auth.uid())
-  and private.has_portfolio_role(portfolio_id, array['owner','admin','editor'])
-);
+with check (private.has_portfolio_role(portfolio_id, array['owner','admin','editor']));
 
 drop policy if exists decisions_select_member on public.decisions;
 create policy decisions_select_member on public.decisions for select to authenticated
@@ -338,15 +386,9 @@ with check (
 drop policy if exists decisions_update_editor on public.decisions;
 create policy decisions_update_editor on public.decisions for update to authenticated
 using (private.has_portfolio_role(portfolio_id, array['owner','admin','editor']))
-with check (
-  created_by = (select auth.uid())
-  and private.has_portfolio_role(portfolio_id, array['owner','admin','editor'])
-);
+with check (private.has_portfolio_role(portfolio_id, array['owner','admin','editor']));
 
 drop policy if exists audit_events_select_admin on public.audit_events;
 create policy audit_events_select_admin on public.audit_events for select to authenticated
 using (private.has_portfolio_role(portfolio_id, array['owner','admin']));
 
--- Candidate only. Verify this revocation against an isolated database before release.
--- The event trigger should continue to run while direct Data API/RPC execution is denied.
-revoke execute on function public.rls_auto_enable() from public, anon, authenticated;
