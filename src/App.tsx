@@ -34,6 +34,7 @@ export default function App() {
   }, []);
 
   if (!supabase) return <PreviewWorkspace />;
+  const client = supabase;
 
   if (loading) {
     return <main className="auth-shell"><section className="auth-card" aria-live="polite"><p className="eyebrow">DAWG 360° · SECURE WORKSPACE</p><h1>Preparing your workspace</h1><p>Checking your signed-in session…</p></section></main>;
@@ -41,5 +42,5 @@ export default function App() {
 
   if (!session?.user) return <AuthPanel />;
 
-  return <ConnectedWorkspace user={session.user as User} onSignOut={() => supabase.auth.signOut()} />;
+  return <ConnectedWorkspace user={session.user as User} onSignOut={() => client.auth.signOut()} />;
 }
