@@ -12,7 +12,7 @@ on conflict (id) do nothing;
 set role authenticated;
 select set_config('request.jwt.claim.sub', '10000000-0000-4000-8000-000000000001', false);
 select auth.uid() as current_test_user, current_setting('request.jwt.claim.sub', true) as current_test_claim;
-insert into public.portfolios (name, created_by) values ('Portfolio One', '10000000-0000-4000-8000-000000000001') returning id \gset p1_
+insert into public.portfolios (id, name, created_by) values (:'p1_id', 'Portfolio One', '10000000-0000-4000-8000-000000000001');
 insert into public.ventures (portfolio_id, name) values (:'p1_id', 'Venture One') returning id \gset v1_
 select exists (
   select 1 from public.portfolio_memberships
@@ -30,7 +30,7 @@ reset role;
 
 set role authenticated;
 select set_config('request.jwt.claim.sub', '20000000-0000-4000-8000-000000000002', false);
-insert into public.portfolios (name, created_by) values ('Portfolio Two', '20000000-0000-4000-8000-000000000002') returning id \gset p2_
+insert into public.portfolios (id, name, created_by) values (:'p2_id', 'Portfolio Two', '20000000-0000-4000-8000-000000000002');
 reset role;
 
 set role authenticated;
