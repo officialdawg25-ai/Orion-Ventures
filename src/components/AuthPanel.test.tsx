@@ -22,7 +22,7 @@ describe("AuthPanel", () => {
   it("submits trimmed email credentials to Supabase Auth", async () => {
     render(<AuthPanel />);
     fireEvent.change(screen.getByLabelText("Email address"), { target: { value: "  user@example.com " } });
-    fireEvent.change(screen.getByLabelText("Password"), { target: { value: "correct-horse-battery" } });
+    fireEvent.change(screen.getByLabelText(/Password/), { target: { value: "correct-horse-battery" } });
     fireEvent.click(screen.getByRole("button", { name: /sign in securely/i }));
 
     await waitFor(() => expect(authMocks.signInWithPassword).toHaveBeenCalledWith({
@@ -36,7 +36,7 @@ describe("AuthPanel", () => {
     fireEvent.click(screen.getByRole("button", { name: /create an account/i }));
     fireEvent.change(screen.getByLabelText("Display name"), { target: { value: "Portfolio Owner" } });
     fireEvent.change(screen.getByLabelText("Email address"), { target: { value: "owner@example.com" } });
-    fireEvent.change(screen.getByLabelText("Password"), { target: { value: "a-strong-password-123" } });
+    fireEvent.change(screen.getByLabelText(/Password/), { target: { value: "a-strong-password-123" } });
     fireEvent.click(screen.getByRole("button", { name: /create account/i }));
 
     await waitFor(() => expect(authMocks.signUp).toHaveBeenCalled());
@@ -52,7 +52,7 @@ describe("AuthPanel", () => {
     authMocks.signInWithPassword.mockResolvedValue({ error: new Error("private provider details") });
     render(<AuthPanel />);
     fireEvent.change(screen.getByLabelText("Email address"), { target: { value: "user@example.com" } });
-    fireEvent.change(screen.getByLabelText("Password"), { target: { value: "correct-horse-battery" } });
+    fireEvent.change(screen.getByLabelText(/Password/), { target: { value: "correct-horse-battery" } });
     fireEvent.click(screen.getByRole("button", { name: /sign in securely/i }));
 
     expect(await screen.findByRole("alert")).toHaveTextContent(/couldn't complete that request/i);
