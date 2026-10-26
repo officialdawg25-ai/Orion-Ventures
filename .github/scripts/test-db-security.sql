@@ -10,11 +10,17 @@ insert into auth.users (id, raw_user_meta_data) values
   ('50000000-0000-4000-8000-000000000005', '{"display_name":"Test Viewer"}'::jsonb)
 on conflict (id) do nothing;
 
+-- User one creates a portfolio. The trigger creates the owner membership.
 set role authenticated;
 select set_config('request.jwt.claim.sub', '10000000-0000-4000-8000-000000000001', false);
-select auth.uid() as current_test_user, current_setting('request.jwt.claim.sub', true) as current_test_claim;
-insert into public.portfolios (id, name, created_by) values (:'p1_id', 'Portfolio One', '10000000-0000-4000-8000-000000000001');
-insert into public.ventures (portfolio_id, name) values (:'p1_id', 'Venture One') returning id \gset v1_
+insert into public.portfolios (id, name, created_by)
+values (:'p1_id', 'Portfolio One', '10000000-0000-4000-8000-000000000001');
+insert into public.ventures (portfolio_id, name)
+values (:'p1_id', 'Venture One') returning id \gset v1_
+insert into public.evidence_items (portfolio_id, venture_id, title, evidence_type, source_reference, limitations)
+values (:'p1_id', :'v1_id', 'Customer interview notes', 'customer_interview', 'CI-001', 'Single interview; not representative')
+returning id \gset e1_
+
 select exists (
   select 1 from public.portfolio_memberships
   where portfolio_id = :'p1_id'
@@ -28,6 +34,7 @@ select exists (
   \quit 1
 \endif
 
+-- An owner proposes a transition with a real evidence-item reference.
 select public.create_stage_review(
   :'p1_id'::uuid,
   :'v1_id'::uuid,
@@ -50,67 +57,94 @@ select exists (
 ) as evidence_linked \gset
 \if :evidence_linked
   \echo 'PASS: stage review references a real evidence record.'
-\\else
+\else
   \echo 'FAIL: stage review evidence link missing.'
   \quit 1
-\\endif
+\endif
 
 update public.venture_stage_reviews
-set status = 'approved', reviewed_by = '10000000-0000-4000-8000-000000000001',
-    reviewed_at = now(), reviewer_notes = 'Approved for bounded validation only.'
+set status = 'approved',
+    reviewed_by = '10000000-0000-4000-8000-000000000001',
+    reviewed_at = now(),
+    reviewer_notes = 'Approved for bounded validation only.'
 where id = :'sr_stage_review_id';
 
 select (lifecycle_stage = 'validation') as stage_advanced
 from public.ventures where id = :'v1_id' \gset
 \if :stage_advanced
   \echo 'PASS: approval applies the reviewed lifecycle-stage transition.'
-\\else
+\else
   \echo 'FAIL: approved stage review did not advance the venture.'
   \quit 1
-\\endif
+\endif
 
 select (applied_at is not null and status = 'approved') as review_applied
 from public.venture_stage_reviews where id = :'sr_stage_review_id' \gset
 \if :review_applied
   \echo 'PASS: stage approval is marked applied exactly once.'
-\\else
+\else
   \echo 'FAIL: stage review was not marked applied.'
   \quit 1
-\\endif
-
+\endif
 reset role;
+
+-- Create a second proposal and a viewer membership for negative authorization tests.
+insert into public.portfolio_memberships (portfolio_id, user_id, role, status)
+values (:'p1_id', '50000000-0000-4000-8000-000000000005', 'viewer', 'active');
 
 set role authenticated;
-select set_config('request.jwt.claim.sub', '20000000-0000-4000-8000-000000000002', false);
-insert into public.portfolios (id, name, created_by) values (:'p2_id', 'Portfolio Two', '20000000-0000-4000-8000-000000000002');
+select set_config('request.jwt.claim.sub', '10000000-0000-4000-8000-000000000001', false);
+select public.create_stage_review(
+  :'p1_id'::uuid, :'v1_id'::uuid, 'business_case',
+  'A bounded business case is needed before launch.',
+  'The customer interview remains early evidence and requires more validation.',
+  250.00, 'ZAR',
+  'Document a repeatable offer, estimated unit economics and delivery constraints.',
+  'Stop if customer willingness to pay or delivery economics cannot be supported.',
+  now() + interval '21 days',
+  array[:'e1_id'::uuid]
+) as stage_review_id \gset sr2_
 reset role;
 
+-- User two creates an unrelated portfolio.
+set role authenticated;
+select set_config('request.jwt.claim.sub', '20000000-0000-4000-8000-000000000002', false);
+insert into public.portfolios (id, name, created_by)
+values (:'p2_id', 'Portfolio Two', '20000000-0000-4000-8000-000000000002');
+reset role;
+
+-- A viewer cannot create a venture or approve a stage review.
 set role authenticated;
 select set_config('request.jwt.claim.sub', '50000000-0000-4000-8000-000000000005', false);
 savepoint before_viewer_insert;
-\\set ON_ERROR_STOP off
-insert into public.ventures (portfolio_id, name) values (:'p1_id', 'Viewer Forbidden Venture');
-\\if :ERROR
-  \\echo 'PASS: viewer cannot create ventures.'
+\set ON_ERROR_STOP off
+insert into public.ventures (portfolio_id, name)
+values (:'p1_id', 'Viewer Forbidden Venture');
+\if :ERROR
+  \echo 'PASS: viewer cannot create ventures.'
   rollback to savepoint before_viewer_insert;
-\\else
-  \\echo 'FAIL: viewer unexpectedly created a venture.'
-  \\quit 1
-\\endif
-\\set ON_ERROR_STOP on
+\else
+  \echo 'FAIL: viewer unexpectedly created a venture.'
+  \quit 1
+\endif
+\set ON_ERROR_STOP on
 update public.venture_stage_reviews
-set status = 'approved', reviewed_by = '50000000-0000-4000-8000-000000000005', reviewed_at = now()
+set status = 'approved',
+    reviewed_by = '50000000-0000-4000-8000-000000000005',
+    reviewed_at = now()
 where id = :'sr2_stage_review_id';
 reset role;
-select (status = 'proposed') as viewer_cannot_approve
-from public.venture_stage_reviews where id = :'sr2_stage_review_id' \\gset
-\\if :viewer_cannot_approve
-  \\echo 'PASS: viewer cannot approve a stage review.'
-\\else
-  \\echo 'FAIL: viewer changed a stage review.'
-  \\quit 1
-\\endif
 
+select (status = 'proposed') as viewer_cannot_approve
+from public.venture_stage_reviews where id = :'sr2_stage_review_id' \gset
+\if :viewer_cannot_approve
+  \echo 'PASS: viewer cannot approve a stage review.'
+\else
+  \echo 'FAIL: viewer changed a stage review.'
+  \quit 1
+\endif
+
+-- User one cannot read or write user two's portfolio.
 set role authenticated;
 select set_config('request.jwt.claim.sub', '10000000-0000-4000-8000-000000000001', false);
 select exists (select 1 from public.portfolios where id = :'p2_id') as cross_portfolio_visible \gset
@@ -131,7 +165,8 @@ select exists (select 1 from public.ventures where portfolio_id = :'p2_id') as c
 
 savepoint before_cross_portfolio_insert;
 \set ON_ERROR_STOP off
-insert into public.ventures (portfolio_id, name) values (:'p2_id', 'Forbidden Venture');
+insert into public.ventures (portfolio_id, name)
+values (:'p2_id', 'Forbidden Venture');
 \if :ERROR
   \echo 'PASS: cross-portfolio INSERT was rejected.'
   rollback to savepoint before_cross_portfolio_insert;
@@ -152,7 +187,6 @@ update public.ventures set lifecycle_stage = 'growth' where id = :'v1_id';
   \quit 1
 \endif
 \set ON_ERROR_STOP on
-
 reset role;
 
 select has_function_privilege('anon', 'public.rls_auto_enable()', 'EXECUTE') as anon_can_execute,
@@ -176,7 +210,7 @@ where n.nspname = 'public' and c.relname = 'rls_trigger_smoke_test'
 \if :trigger_enabled_rls
   \echo 'PASS: event trigger still enables RLS after execute grants are revoked.'
 \else
-  \echo 'FAIL: event trigger did not enable RLS after execute grants were revoked.'
+  \echo 'FAIL: event trigger did not enable RLS after execute grants are revoked.'
   \quit 1
 \endif
 drop table public.rls_trigger_smoke_test;
