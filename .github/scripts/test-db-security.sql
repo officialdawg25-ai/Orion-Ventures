@@ -1,6 +1,9 @@
 \set ON_ERROR_STOP on
 begin;
 
+\set p1_id '30000000-0000-4000-8000-000000000003'
+\set p2_id '40000000-0000-4000-8000-000000000004'
+
 insert into auth.users (id, raw_user_meta_data) values
   ('10000000-0000-4000-8000-000000000001', '{"display_name":"Test One"}'::jsonb),
   ('20000000-0000-4000-8000-000000000002', '{"display_name":"Test Two"}'::jsonb)
