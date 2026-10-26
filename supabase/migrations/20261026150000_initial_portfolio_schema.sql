@@ -307,7 +307,7 @@ from public, anon, authenticated;
 grant select on public.profiles to authenticated;
 grant update (display_name) on public.profiles to authenticated;
 grant select on public.portfolios to authenticated;
-grant insert (name, created_by, base_currency) on public.portfolios to authenticated;
+grant insert (id, name, created_by, base_currency) on public.portfolios to authenticated;
 grant select on public.portfolio_memberships to authenticated;
 grant select on public.ventures to authenticated;
 grant insert (portfolio_id, name, description, venture_type, accountable_owner, currency_code, created_by)
