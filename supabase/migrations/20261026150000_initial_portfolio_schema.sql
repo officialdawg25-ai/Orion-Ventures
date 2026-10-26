@@ -197,11 +197,19 @@ declare
   v_actor uuid;
 begin
   if tg_op = 'DELETE' then
-    v_portfolio_id := old.portfolio_id;
     v_entity_id := old.id;
+    if tg_table_name = 'portfolios' then
+      v_portfolio_id := old.id;
+    else
+      v_portfolio_id := old.portfolio_id;
+    end if;
   else
-    v_portfolio_id := new.portfolio_id;
     v_entity_id := new.id;
+    if tg_table_name = 'portfolios' then
+      v_portfolio_id := new.id;
+    else
+      v_portfolio_id := new.portfolio_id;
+    end if;
   end if;
 
   v_actor := auth.uid();
