@@ -45,7 +45,7 @@ npm run build
 npm run dev
 ```
 
-A generated npm lockfile must be committed before using locked installs or treating builds as fully reproducible. CI currently creates a short-retention lockfile artifact for that purpose.
+CI generates and commits the npm lockfile on this development branch only after both application and database-security checks pass. Subsequent validation runs use `npm ci` against that lockfile.
 
 ## Environment
 
