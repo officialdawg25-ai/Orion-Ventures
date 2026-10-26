@@ -31,15 +31,12 @@ jobs:
           node-version: "20.19.0"
 
       - name: Install dependencies
-        run: npm install --no-audit --no-fund
-
-      - name: Preserve generated lockfile for repository pinning
-        uses: actions/upload-artifact@v4
-        with:
-          name: npm-lockfile
-          path: package-lock.json
-          if-no-files-found: error
-          retention-days: 3
+        run: |
+          if [ -f package-lock.json ]; then
+            npm ci --no-audit --no-fund
+          else
+            npm install --no-audit --no-fund
+          fi
 
       - name: Typecheck
         run: npm run typecheck
@@ -83,3 +80,38 @@ jobs:
 
       - name: Apply migrations to disposable PostgreSQL fixture and test authorization
         run: bash .github/scripts/test-db-security.sh
+
+  pin-dependencies:
+    if: github.event_name == 'pull_request' && github.event.pull_request.head.ref == 'docs/mpos-phase-zero-architecture' && github.event.pull_request.head.repo.full_name == github.repository
+    needs: [validate, database-security]
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: write
+    steps:
+      - name: Check out development branch
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.ref }}
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20.19.0"
+
+      - name: Generate dependency lockfile without running package scripts
+        run: npm install --package-lock-only --ignore-scripts --no-audit --no-fund
+
+      - name: Commit lockfile only when it changes
+        env:
+          TARGET_BRANCH: ${{ github.event.pull_request.head.ref }}
+        run: |
+          git add package-lock.json
+          if git diff --cached --quiet; then
+            echo "Dependency lockfile is already current."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -m "chore: pin npm dependency graph"
+          git push origin "HEAD:${TARGET_BRANCH}"
