@@ -2,7 +2,7 @@
 
 **Updated:** 2026-10-26  
 **Scope:** Repository baseline, data-backed MVP, candidate database migrations and CI evidence.  
-**Status:** Development foundation; staging and production verification remain incomplete.
+**Status:** Development foundation; staging and production verification remain incomplete. Final lockfile-based CI is being re-run before merge.
 
 ## Baseline findings
 
