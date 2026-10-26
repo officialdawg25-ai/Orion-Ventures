@@ -1,4 +1,5 @@
 \set ON_ERROR_STOP on
+begin;
 
 insert into auth.users (id, raw_user_meta_data) values
   ('10000000-0000-4000-8000-000000000001', '{"display_name":"Test One"}'::jsonb),
@@ -22,6 +23,7 @@ select exists (
   \quit 1
 \endif
 reset role;
+commit;
 
 set role authenticated;
 select set_config('request.jwt.claim.sub', '20000000-0000-4000-8000-000000000002', false);
