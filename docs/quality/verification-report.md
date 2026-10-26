@@ -43,12 +43,12 @@ In a later run, the disposable PostgreSQL database job passed these checks:
 - The existing event trigger still enables RLS on a newly created table after that revocation.
 - RLS is enabled on all nine initial application/stage-gate tables in the test fixture.
 
-The overall workflow run that introduced the authentication tests failed because the password label selector was overly exact. The selector has been corrected, and additional tests now cover password-reset requests and recovery completion. A new complete CI run is required before declaring the entire workflow green.
+The latest full workflow on the pre-lockfile commit passed typecheck, all UI tests, production build, and the disposable PostgreSQL security suite. The CI lockfile job then committed `package-lock.json` to this development branch. A final run on the new head is required to verify locked installation.
 
 ## Not yet verified / release blockers
 
 - Complete CI pass after the latest auth test fix and stage-gate changes.
-- A committed npm lockfile; the CI lockfile job will commit it to this development branch only after both validation jobs pass.
+- The npm lockfile was committed by the branch-only CI lockfile job after both validation jobs passed. A final run must verify the latest branch with `npm ci`.
 - Testing against an actual isolated Supabase branch, not only a PostgreSQL compatibility fixture.
 - Applying the candidate migrations to staging and running current Supabase security advisors.
 - Authentication recovery flow and privileged MFA policy.
