@@ -263,3 +263,21 @@ h1 { margin-bottom: 10px; font: 700 clamp(26px, 2.8vw, 36px)/1.2 "Manrope", sans
   .section-heading { align-items: flex-start; flex-direction: column; }
   .breadcrumbs { gap: 6px; font-size: 10px; }
 }
+
+
+.form-description, .form-hint { color: #777b73; font-size: 11px; line-height: 1.7; }
+.form-hint { padding: 10px 12px; border-left: 2px solid #d8d3c0; background: #f8f7f1; }
+.stage-review-surface { padding: 22px; margin-top: 16px; }
+.stage-review-form { max-width: 850px; }
+.stage-form-row { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+.stage-review-list-heading { margin-top: 30px; }
+.stage-review-record { padding: 17px 0; }
+.stage-review-record > p { margin-top: 9px; }
+.stage-review-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+.stage-review-actions .outline-button { min-height: 40px; }
+.record-form select[multiple] { min-height: 95px; padding: 7px; }
+.record-form select[multiple] option { padding: 5px; }
+@media (max-width: 720px) {
+  .stage-form-row { grid-template-columns: minmax(0, 1fr); }
+  .stage-review-surface { padding: 16px; }
+}
