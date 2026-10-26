@@ -39,19 +39,19 @@ select public.create_stage_review(
   'Pause if fewer than two target customers confirm the problem or the spend cap is reached.',
   now() + interval '14 days',
   array[:'e1_id'::uuid]
-) as stage_review_id \\gset sr_
+) as stage_review_id \gset sr_
 
 select exists (
   select 1 from public.venture_stage_review_evidence
   where stage_review_id = :'sr_stage_review_id'
     and evidence_item_id = :'e1_id'
     and portfolio_id = :'p1_id'
-) as evidence_linked \\gset
-\\if :evidence_linked
-  \\echo 'PASS: stage review references a real evidence record.'
+) as evidence_linked \gset
+\if :evidence_linked
+  \echo 'PASS: stage review references a real evidence record.'
 \\else
-  \\echo 'FAIL: stage review evidence link missing.'
-  \\quit 1
+  \echo 'FAIL: stage review evidence link missing.'
+  \quit 1
 \\endif
 
 update public.venture_stage_reviews
@@ -60,21 +60,21 @@ set status = 'approved', reviewed_by = '10000000-0000-4000-8000-000000000001',
 where id = :'sr_stage_review_id';
 
 select (lifecycle_stage = 'validation') as stage_advanced
-from public.ventures where id = :'v1_id' \\gset
-\\if :stage_advanced
-  \\echo 'PASS: approval applies the reviewed lifecycle-stage transition.'
+from public.ventures where id = :'v1_id' \gset
+\if :stage_advanced
+  \echo 'PASS: approval applies the reviewed lifecycle-stage transition.'
 \\else
-  \\echo 'FAIL: approved stage review did not advance the venture.'
-  \\quit 1
+  \echo 'FAIL: approved stage review did not advance the venture.'
+  \quit 1
 \\endif
 
 select (applied_at is not null and status = 'approved') as review_applied
-from public.venture_stage_reviews where id = :'sr_stage_review_id' \\gset
-\\if :review_applied
-  \\echo 'PASS: stage approval is marked applied exactly once.'
+from public.venture_stage_reviews where id = :'sr_stage_review_id' \gset
+\if :review_applied
+  \echo 'PASS: stage approval is marked applied exactly once.'
 \\else
-  \\echo 'FAIL: stage review was not marked applied.'
-  \\quit 1
+  \echo 'FAIL: stage review was not marked applied.'
+  \quit 1
 \\endif
 
 reset role;
