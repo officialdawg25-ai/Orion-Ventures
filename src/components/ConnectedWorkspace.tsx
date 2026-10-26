@@ -5,9 +5,11 @@ import {
 } from "lucide-react";
 import type { User } from "@supabase/supabase-js";
 import {
-  createDecision, createEvidence, createPortfolio, createVenture,
-  listDecisions, listEvidence, listPortfolios, listVentures,
-  type Decision, type EvidenceItem, type Portfolio, type Venture,
+  createDecision, createEvidence, createPortfolio, createStageReview, createVenture,
+  decideStageReview, getMyPortfolioRole, listDecisions, listEvidence, listPortfolios,
+  listStageReviewEvidence, listStageReviews, listVentures,
+  type Decision, type EvidenceItem, type Portfolio, type PortfolioRole, type StageReview,
+  type StageReviewEvidence, type Venture,
 } from "../lib/portfolio";
 
 type Section = "Overview" | "Ventures" | "Acquisition" | "Finance" | "Operations" | "Evidence & decisions";
@@ -41,6 +43,9 @@ export default function ConnectedWorkspace({ user, onSignOut }: { user: User; on
   const [ventures, setVentures] = useState<Venture[]>([]);
   const [evidence, setEvidence] = useState<EvidenceItem[]>([]);
   const [decisions, setDecisions] = useState<Decision[]>([]);
+  const [stageReviews, setStageReviews] = useState<StageReview[]>([]);
+  const [stageReviewEvidence, setStageReviewEvidence] = useState<StageReviewEvidence[]>([]);
+  const [memberRole, setMemberRole] = useState<PortfolioRole | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
@@ -62,6 +67,16 @@ export default function ConnectedWorkspace({ user, onSignOut }: { user: User; on
   const [decisionRationale, setDecisionRationale] = useState("");
   const [decisionVenture, setDecisionVenture] = useState("");
   const [decisionReviewAt, setDecisionReviewAt] = useState("");
+  const [stageVenture, setStageVenture] = useState("");
+  const [stageProposed, setStageProposed] = useState("validation");
+  const [stageRationale, setStageRationale] = useState("");
+  const [stageEvidenceSummary, setStageEvidenceSummary] = useState("");
+  const [stageSpendCap, setStageSpendCap] = useState("");
+  const [stageCurrency, setStageCurrency] = useState("ZAR");
+  const [stageSuccessCriteria, setStageSuccessCriteria] = useState("");
+  const [stageStopCriteria, setStageStopCriteria] = useState("");
+  const [stageNextReviewAt, setStageNextReviewAt] = useState("");
+  const [stageEvidenceIds, setStageEvidenceIds] = useState<string[]>([]);
 
   const activePortfolio = portfolios.find((item) => item.id === portfolioId) ?? null;
   const loadPortfolios = useCallback(async () => {
@@ -79,24 +94,28 @@ export default function ConnectedWorkspace({ user, onSignOut }: { user: User; on
 
   const loadRecords = useCallback(async (id: string) => {
     if (!id) {
-      setVentures([]); setEvidence([]); setDecisions([]);
+      setVentures([]); setEvidence([]); setDecisions([]); setStageReviews([]); setStageReviewEvidence([]); setMemberRole(null);
       return;
     }
     setLoading(true);
     setError("");
     try {
-      const [ventureRows, evidenceRows, decisionRows] = await Promise.all([
+      const [ventureRows, evidenceRows, decisionRows, reviewRows, reviewEvidenceRows, role] = await Promise.all([
         listVentures(id), listEvidence(id), listDecisions(id),
+        listStageReviews(id), listStageReviewEvidence(id), getMyPortfolioRole(id, user.id),
       ]);
       setVentures(ventureRows);
       setEvidence(evidenceRows);
       setDecisions(decisionRows);
+      setStageReviews(reviewRows);
+      setStageReviewEvidence(reviewEvidenceRows);
+      setMemberRole(role);
     } catch {
       setError(safeError());
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [user.id]);
 
   useEffect(() => { void loadPortfolios(); }, [loadPortfolios]);
   useEffect(() => { void loadRecords(portfolioId); }, [portfolioId, loadRecords]);
@@ -167,6 +186,54 @@ export default function ConnectedWorkspace({ user, onSignOut }: { user: User; on
       setDecisions((current) => [created, ...current]);
       setDecisionTitle(""); setDecisionRationale(""); setDecisionReviewAt("");
       setNotice("Decision record saved with its rationale and review date.");
+    } catch { setError(safeError()); }
+    finally { setSaving(false); }
+  }
+
+
+  async function createStageReviewSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const venture = ventures.find((item) => item.id === stageVenture);
+    if (!portfolioId || !venture) { setError("Choose a venture for this stage review."); return; }
+    if (venture.lifecycle_stage === stageProposed) { setError("Choose a different stage from the venture's current stage."); return; }
+    if (!stageEvidenceIds.length) { setError("Link at least one evidence record to support this stage review."); return; }
+    if (stageRationale.trim().length < 5 || stageEvidenceSummary.trim().length < 5 ||
+        stageSuccessCriteria.trim().length < 5 || stageStopCriteria.trim().length < 5) {
+      setError("Complete the rationale, evidence summary, success criteria and stop criteria.");
+      return;
+    }
+    const spend = stageSpendCap.trim() ? Number(stageSpendCap) : null;
+    if (spend !== null && (!Number.isFinite(spend) || spend < 0)) {
+      setError("Spend cap must be a non-negative amount.");
+      return;
+    }
+    setSaving(true); setError(""); setNotice("");
+    try {
+      await createStageReview({
+        portfolioId, ventureId: stageVenture, proposedStage: stageProposed, rationale: stageRationale,
+        evidenceSummary: stageEvidenceSummary, spendCap: spend, currencyCode: stageCurrency,
+        successCriteria: stageSuccessCriteria, stopCriteria: stageStopCriteria,
+        nextReviewAt: stageNextReviewAt ? new Date(stageNextReviewAt).toISOString() : null,
+        evidenceItemIds: stageEvidenceIds,
+      });
+      setStageRationale(""); setStageEvidenceSummary(""); setStageSpendCap("");
+      setStageSuccessCriteria(""); setStageStopCriteria(""); setStageNextReviewAt(""); setStageEvidenceIds([]);
+      await loadRecords(portfolioId);
+      setNotice("Stage review submitted. The venture's stage will change only after an authorized approval.");
+    } catch { setError(safeError()); }
+    finally { setSaving(false); }
+  }
+
+  async function decideStageReviewAction(reviewId: string, status: "approved" | "rejected") {
+    if (!portfolioId) return;
+    setSaving(true); setError(""); setNotice("");
+    try {
+      await decideStageReview({
+        portfolioId, reviewId, userId: user.id, status,
+        reviewerNotes: status === "approved" ? "Approved by an authorized portfolio reviewer." : "Rejected; revise the evidence and resubmit.",
+      });
+      await loadRecords(portfolioId);
+      setNotice(status === "approved" ? "Stage review approved and applied." : "Stage review rejected. The venture stage was not changed.");
     } catch { setError(safeError()); }
     finally { setSaving(false); }
   }
@@ -264,6 +331,41 @@ export default function ConnectedWorkspace({ user, onSignOut }: { user: User; on
                 {ventures.length ? <div className="record-list">{ventures.map((venture) => <article className="venture-record" key={venture.id}><div className="record-row-main"><strong>{venture.name}</strong><span className="quiet-tag">{venture.venture_type}</span></div><p>{venture.description || "No description recorded."}</p><div className="record-meta"><span>{stages[venture.lifecycle_stage] || venture.lifecycle_stage}</span><span>{venture.status}</span><span>{venture.currency_code}</span></div></article>)}</div> : <Empty message="Your venture register is empty. Add the first venture when you're ready." />}
               </section>
             </div>
+          )}
+
+
+          {activePortfolio && !loading && section === "Ventures" && (
+            <section className="surface stage-review-surface">
+              <div className="surface-heading"><div><span className="section-kicker">LIFECYCLE GOVERNANCE</span><h2>Propose a stage change</h2></div><span className="quiet-tag">Evidence required</span></div>
+              <p className="form-description">A stage is not changed by editing a field. Submit the proposed transition with evidence, a spend cap, success criteria and stop criteria. An owner or admin must approve it.</p>
+              {!ventures.length || !evidence.length ? <p className="form-hint">Add a venture and at least one evidence record before proposing a stage change.</p> : null}
+              <form className="record-form stage-review-form" onSubmit={createStageReviewSubmit}>
+                <label>Venture<select value={stageVenture} onChange={(event) => setStageVenture(event.target.value)} required><option value="">Choose venture</option>{ventures.map((venture) => <option key={venture.id} value={venture.id}>{venture.name} — {stages[venture.lifecycle_stage] || venture.lifecycle_stage}</option>)}</select></label>
+                <label>Proposed next stage<select value={stageProposed} onChange={(event) => setStageProposed(event.target.value)} required>{Object.entries(stages).map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select></label>
+                <label>Rationale<textarea value={stageRationale} onChange={(event) => setStageRationale(event.target.value)} maxLength={10000} minLength={5} rows={3} required placeholder="Why is this transition justified by the evidence?" /></label>
+                <label>Evidence summary<textarea value={stageEvidenceSummary} onChange={(event) => setStageEvidenceSummary(event.target.value)} maxLength={5000} minLength={5} rows={2} required placeholder="What does the evidence demonstrate, and what remains uncertain?" /></label>
+                <label>Link evidence records <select multiple size={Math.min(5, Math.max(3, evidence.length))} value={stageEvidenceIds} onChange={(event) => setStageEvidenceIds(Array.from(event.currentTarget.selectedOptions, (option) => option.value))} required>{evidence.map((item) => <option key={item.id} value={item.id}>{item.title} · {item.evidence_type.replaceAll("_", " ")}</option>)}</select><span className="field-hint">Select one or more records. Hold Ctrl/Command to select multiple.</span></label>
+                <div className="stage-form-row"><label>Spend cap (optional)<input type="number" min="0" step="0.01" value={stageSpendCap} onChange={(event) => setStageSpendCap(event.target.value)} placeholder="0.00" /></label><label>Currency<select value={stageCurrency} onChange={(event) => setStageCurrency(event.target.value)}><option value="ZAR">ZAR</option><option value="USD">USD</option><option value="EUR">EUR</option><option value="GBP">GBP</option></select></label><label>Next review date<input type="date" value={stageNextReviewAt} onChange={(event) => setStageNextReviewAt(event.target.value)} /></label></div>
+                <label>Success criteria<textarea value={stageSuccessCriteria} onChange={(event) => setStageSuccessCriteria(event.target.value)} maxLength={5000} minLength={5} rows={2} required placeholder="Measurable conditions that justify the next stage" /></label>
+                <label>Stop criteria<textarea value={stageStopCriteria} onChange={(event) => setStageStopCriteria(event.target.value)} maxLength={5000} minLength={5} rows={2} required placeholder="Conditions that pause or stop the experiment" /></label>
+                <button className="primary-button" disabled={saving || !ventures.length || !evidence.length}>{saving ? "Submitting…" : "Submit stage review"} <ArrowRight size={15} /></button>
+              </form>
+              <div className="section-heading stage-review-list-heading"><div><h2>Stage reviews ({stageReviews.length})</h2><p>{memberRole === "owner" || memberRole === "admin" ? "You can approve or reject proposed transitions." : "Proposals require an owner/admin decision."}</p></div></div>
+              {stageReviews.length ? <div className="record-list">{stageReviews.map((review) => {
+                const linkedIds = stageReviewEvidence.filter((link) => link.stage_review_id === review.id).map((link) => link.evidence_item_id);
+                const linkedTitles = evidence.filter((item) => linkedIds.includes(item.id)).map((item) => item.title);
+                return <article className="venture-record stage-review-record" key={review.id}>
+                  <div className="record-row-main"><strong>{stages[review.from_stage] || review.from_stage} → {stages[review.proposed_stage] || review.proposed_stage}</strong><span className="quiet-tag">{review.applied_at ? "Applied" : review.status}</span></div>
+                  <p>{review.rationale}</p>
+                  <p><strong>Evidence:</strong> {review.evidence_summary}</p>
+                  {linkedTitles.length ? <p><strong>Linked records:</strong> {linkedTitles.join(", ")}</p> : null}
+                  <div className="record-meta"><span>Spend cap: {review.spend_cap === null ? "Not set" : `${review.currency_code} ${Number(review.spend_cap).toFixed(2)}`}</span><span>Review: {dateLabel(review.next_review_at)}</span></div>
+                  <p><strong>Success:</strong> {review.success_criteria}</p><p><strong>Stop:</strong> {review.stop_criteria}</p>
+                  {review.reviewer_notes ? <p className="record-limitation">{review.reviewer_notes}</p> : null}
+                  {review.status === "proposed" && (memberRole === "owner" || memberRole === "admin") ? <div className="stage-review-actions"><button className="primary-button" disabled={saving} onClick={() => void decideStageReviewAction(review.id, "approved")}>Approve & apply <CheckCircle2 size={14} /></button><button className="outline-button" disabled={saving} onClick={() => void decideStageReviewAction(review.id, "rejected")}>Reject proposal</button></div> : null}
+                </article>;
+              })}</div> : <Empty message="No stage reviews yet. Propose a transition when there is enough evidence to justify it." />}
+            </section>
           )}
 
           {activePortfolio && !loading && section === "Evidence & decisions" && (
