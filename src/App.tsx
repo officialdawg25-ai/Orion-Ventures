@@ -141,7 +141,6 @@ function StatusPill({ children }: { children: string }) {
 }
 
 function EmptyState({ section, onSettings }: { section: Section; onSettings: () => void }) {
-  const copy = pageCopy[section];
   return (
     <section className="empty-panel" aria-labelledby="empty-title">
       <div className="empty-symbol" aria-hidden="true">
@@ -164,7 +163,7 @@ function Overview({ onNavigate }: { onNavigate: (section: Section) => void }) {
     <>
       <section className="welcome-block">
         <div>
-          <div className="eyebrow">MONDAY, 26 OCTOBER 2026 <span className="eyebrow-divider">/</span> {pageCopy.overview.eyebrow}</div>
+          <div className="eyebrow">{new Intl.DateTimeFormat("en-ZA", { weekday: "long", day: "2-digit", month: "long", year: "numeric" }).format(new Date()).toUpperCase()} <span className="eyebrow-divider">/</span> {pageCopy.overview.eyebrow}</div>
           <h1>{pageCopy.overview.title}</h1>
           <p className="welcome-description">{pageCopy.overview.description}</p>
         </div>
