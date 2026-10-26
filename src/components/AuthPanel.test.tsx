@@ -63,6 +63,7 @@ describe("AuthPanel", () => {
 });
 
   it("requests password recovery without disclosing whether an account exists", async () => {
+    authMocks.resetPasswordForEmail.mockResolvedValue({ error: null });
     render(<AuthPanel />);
     fireEvent.click(screen.getByRole("button", { name: /forgot password/i }));
     fireEvent.change(screen.getByLabelText("Email address"), { target: { value: "user@example.com" } });
