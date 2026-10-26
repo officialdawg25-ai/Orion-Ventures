@@ -14,7 +14,7 @@ The development branch includes:
 - PostgreSQL migrations, RLS policies, restricted grants, audit triggers and a disposable PostgreSQL authorization test suite.
 - Product, architecture, security, lifecycle, cost and operational documentation.
 
-The app does not yet implement the full portfolio roadmap. Customer acquisition, finance/ledger, operations, organization/role management, integrations, password recovery UX, MFA policy configuration, production observability, staging deployment and disaster-recovery drills remain incomplete. The remote Supabase project and live Cloudflare Worker have not been modified by this branch.
+The app does not yet implement the full portfolio roadmap. Customer acquisition, finance/ledger, operations, organization/role management, integrations, MFA policy configuration, production observability, staging deployment and disaster-recovery drills remain incomplete. The remote Supabase project and live Cloudflare Worker have not been modified by this branch.
 
 ## Product principles
 
