@@ -47,6 +47,36 @@ export type Decision = {
   created_at: string;
 };
 
+export type StageReview = {
+  id: string;
+  portfolio_id: string;
+  venture_id: string;
+  from_stage: string;
+  proposed_stage: string;
+  rationale: string;
+  evidence_summary: string;
+  spend_cap: number | null;
+  currency_code: string;
+  success_criteria: string;
+  stop_criteria: string;
+  next_review_at: string | null;
+  status: "proposed" | "approved" | "rejected";
+  reviewer_notes: string;
+  reviewed_by: string | null;
+  reviewed_at: string | null;
+  applied_at: string | null;
+  created_at: string;
+};
+
+export type StageReviewEvidence = {
+  id: string;
+  portfolio_id: string;
+  stage_review_id: string;
+  evidence_item_id: string;
+};
+
+export type PortfolioRole = "owner" | "admin" | "editor" | "viewer";
+
 function requireClient() {
   if (!supabase) throw new Error("Supabase is not configured for this environment.");
   return supabase;
@@ -192,4 +222,94 @@ export async function createDecision(input: {
     .single();
   if (error) throw error;
   return data as Decision;
+}
+
+export async function listStageReviews(portfolioId: string) {
+  const client = requireClient();
+  const { data, error } = await client
+    .from("venture_stage_reviews")
+    .select("id,portfolio_id,venture_id,from_stage,proposed_stage,rationale,evidence_summary,spend_cap,currency_code,success_criteria,stop_criteria,next_review_at,status,reviewer_notes,reviewed_by,reviewed_at,applied_at,created_at")
+    .eq("portfolio_id", portfolioId)
+    .order("created_at", { ascending: false })
+    .limit(100);
+  if (error) throw error;
+  return (data ?? []) as StageReview[];
+}
+
+export async function listStageReviewEvidence(portfolioId: string) {
+  const client = requireClient();
+  const { data, error } = await client
+    .from("venture_stage_review_evidence")
+    .select("id,portfolio_id,stage_review_id,evidence_item_id")
+    .eq("portfolio_id", portfolioId);
+  if (error) throw error;
+  return (data ?? []) as StageReviewEvidence[];
+}
+
+export async function getMyPortfolioRole(portfolioId: string, userId: string) {
+  const client = requireClient();
+  const { data, error } = await client
+    .from("portfolio_memberships")
+    .select("role,status")
+    .eq("portfolio_id", portfolioId)
+    .eq("user_id", userId)
+    .maybeSingle();
+  if (error) throw error;
+  return data?.status === "active" ? data.role as PortfolioRole : null;
+}
+
+export async function createStageReview(input: {
+  portfolioId: string;
+  ventureId: string;
+  proposedStage: string;
+  rationale: string;
+  evidenceSummary: string;
+  spendCap: number | null;
+  currencyCode: string;
+  successCriteria: string;
+  stopCriteria: string;
+  nextReviewAt: string | null;
+  evidenceItemIds: string[];
+}) {
+  const client = requireClient();
+  const { data, error } = await client.rpc("create_stage_review", {
+    p_portfolio_id: input.portfolioId,
+    p_venture_id: input.ventureId,
+    p_proposed_stage: input.proposedStage,
+    p_rationale: input.rationale.trim(),
+    p_evidence_summary: input.evidenceSummary.trim(),
+    p_spend_cap: input.spendCap,
+    p_currency_code: input.currencyCode,
+    p_success_criteria: input.successCriteria.trim(),
+    p_stop_criteria: input.stopCriteria.trim(),
+    p_next_review_at: input.nextReviewAt,
+    p_evidence_item_ids: input.evidenceItemIds,
+  });
+  if (error) throw error;
+  return data as string;
+}
+
+export async function decideStageReview(input: {
+  portfolioId: string;
+  reviewId: string;
+  userId: string;
+  status: "approved" | "rejected";
+  reviewerNotes: string;
+}) {
+  const client = requireClient();
+  const { data, error } = await client
+    .from("venture_stage_reviews")
+    .update({
+      status: input.status,
+      reviewed_by: input.userId,
+      reviewed_at: new Date().toISOString(),
+      reviewer_notes: input.reviewerNotes.trim(),
+    })
+    .eq("portfolio_id", input.portfolioId)
+    .eq("id", input.reviewId)
+    .eq("status", "proposed")
+    .select("id,status,applied_at")
+    .single();
+  if (error) throw error;
+  return data as Pick<StageReview, "id" | "status" | "applied_at">;
 }
