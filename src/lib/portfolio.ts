@@ -64,12 +64,19 @@ export async function listPortfolios() {
 
 export async function createPortfolio(name: string, currency: string, user: User) {
   const client = requireClient();
-  const { data, error } = await client
+  const id = crypto.randomUUID();
+  const { error } = await client
     .from("portfolios")
-    .insert({ name: name.trim(), base_currency: currency, created_by: user.id })
-    .select("id,name,base_currency,created_at")
-    .single();
+    .insert({ id, name: name.trim(), base_currency: currency, created_by: user.id });
   if (error) throw error;
+
+  // Fetch in a separate statement after the owner-membership trigger has completed.
+  const { data, error: fetchError } = await client
+    .from("portfolios")
+    .select("id,name,base_currency,created_at")
+    .eq("id", id)
+    .single();
+  if (fetchError) throw fetchError;
   return data as Portfolio;
 }
 
