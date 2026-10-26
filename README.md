@@ -45,7 +45,7 @@ npm run build
 npm run dev
 ```
 
-CI generates and commits the npm lockfile on this development branch only after both application and database-security checks pass. Subsequent validation runs use `npm ci` against that lockfile.
+The npm lockfile is committed on this development branch. CI uses `npm ci` against the lockfile for subsequent validation runs.
 
 ## Environment
 
