@@ -20,22 +20,23 @@
 
 ## Changes made on the development branch
 
-The branch `docs/mpos-phase-zero-architecture` now contains:
+The branch `docs/mpos-phase-zero-architecture` is 33 commits ahead of `main` and 0 commits behind at the latest comparison. The changes are isolated to this branch. It now contains:
 - React + TypeScript + Vite foundation files.
-- Initial responsive DAWG 360° interface shell.
+- Initial responsive DAWG 360° interface shell and navigation.
 - Browser-safe environment example.
 - System architecture, venture lifecycle, security threat model and implementation roadmap.
-- Initial Vitest tests and a GitHub Actions CI workflow.
+- Initial Vitest UI tests and a GitHub Actions CI workflow.
 - Updated project README.
 
 These are repository changes only. No Supabase schema/data/configuration was changed and no Cloudflare Worker was deployed or modified.
 
 ## Not yet verified
 
-- Dependency installation and lockfile generation.
+- Dependency installation and lockfile generation. The CI workflow has no cache dependency on the absent lockfile, but reproducible locked installs remain a release requirement.
 - TypeScript checks, unit tests and production build execution.
-- GitHub Actions result.
+- GitHub Actions result. The latest commit status endpoint returned no status checks; this is not evidence of a passing build.
 - Browser rendering and accessibility in a real browser.
+- The current test suite has not been executed in this session; do not treat the presence of tests as a passing result.
 - Supabase authentication, data connection, RLS or migration replay.
 - Security remediation for `rls_auto_enable()`.
 - Staging deployment, recovery and production release.
