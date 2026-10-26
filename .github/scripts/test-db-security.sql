@@ -23,7 +23,6 @@ select exists (
   \quit 1
 \endif
 reset role;
-commit;
 
 set role authenticated;
 select set_config('request.jwt.claim.sub', '20000000-0000-4000-8000-000000000002', false);
@@ -114,3 +113,4 @@ where n.nspname = 'public' and c.relkind = 'r'
 \endif
 
 reset role;
+commit;
