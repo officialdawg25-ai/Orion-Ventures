@@ -256,7 +256,6 @@ grant update (status, reviewer_notes, reviewed_by, reviewed_at)
   on public.venture_stage_reviews to authenticated;
 grant insert (portfolio_id, stage_review_id, evidence_item_id, created_by)
   on public.venture_stage_review_evidence to authenticated;
-grant execute on function public.create_stage_review(uuid, uuid, text, text, text, numeric, text, text, text, timestamptz, uuid[]) to authenticated;
 
 drop policy if exists stage_reviews_select_member on public.venture_stage_reviews;
 create policy stage_reviews_select_member on public.venture_stage_reviews for select to authenticated
@@ -341,3 +340,4 @@ end;
 $function$;
 
 revoke all on function public.create_stage_review(uuid, uuid, text, text, text, numeric, text, text, text, timestamptz, uuid[]) from public, anon;
+grant execute on function public.create_stage_review(uuid, uuid, text, text, text, numeric, text, text, text, timestamptz, uuid[]) to authenticated;
