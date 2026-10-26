@@ -48,7 +48,7 @@ The overall workflow run that introduced the authentication tests failed because
 ## Not yet verified / release blockers
 
 - Complete CI pass after the latest auth test fix and stage-gate changes.
-- A committed npm lockfile; CI generates a short-retention artifact to create it.
+- A committed npm lockfile; the CI lockfile job will commit it to this development branch only after both validation jobs pass.
 - Testing against an actual isolated Supabase branch, not only a PostgreSQL compatibility fixture.
 - Applying the candidate migrations to staging and running current Supabase security advisors.
 - Authentication recovery flow and privileged MFA policy.
