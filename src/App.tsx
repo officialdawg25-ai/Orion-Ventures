@@ -2,7 +2,7 @@ import { useState } from "react";
 import {
   Activity, ArrowDownRight, ArrowUpRight, BriefcaseBusiness, CheckCircle2,
   ChevronDown, CircleHelp, Compass, FileText, Gauge, Layers3, LockKeyhole,
-  Plus, Search, Settings2, ShieldCheck, SlidersHorizontal, Target, Wallet,
+  Search, Settings2, ShieldCheck, SlidersHorizontal, Target, Wallet,
 } from "lucide-react";
 
 type Section = "Overview" | "Ventures" | "Acquisition" | "Finance" | "Operations" | "Evidence & decisions";
@@ -129,7 +129,7 @@ function App() {
         <section className="page-content">
           <div className="welcome-line">
             <span className="eyebrow">{active.eyebrow}</span>
-            <span className="date-note">FOUNDATION PHASE <span>·</span> 26 OCT 2026</span>
+            <span className="date-note">FOUNDATION PHASE <span>·</span> EVIDENCE FIRST</span>
           </div>
           <div className="hero-row">
             <div className="hero-copy">
