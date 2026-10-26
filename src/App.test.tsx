@@ -7,7 +7,7 @@ describe("DAWG 360 portfolio shell", () => {
     render(<App />);
 
     expect(screen.getByRole("heading", { name: /build deliberately\. allocate attention wisely/i })).toBeTruthy();
-    expect(screen.getByText(/not connected/i)).toBeTruthy();
+    expect(screen.getByText("NOT CONNECTED")).toBeTruthy();
     expect(screen.getByText(/no venture, financial or customer figures are being represented as real/i)).toBeTruthy();
     expect(screen.getByText("Active ventures")).toBeTruthy();
     expect(screen.getAllByText("—").length).toBeGreaterThanOrEqual(4);
@@ -16,7 +16,7 @@ describe("DAWG 360 portfolio shell", () => {
   it("switches to the venture registry view", () => {
     render(<App />);
 
-    fireEvent.click(screen.getByRole("button", { name: /ventures/i }));
+    fireEvent.click(screen.getByRole("button", { name: "Ventures" }));
     expect(screen.getByRole("heading", { name: /every venture has a stage and a reason/i })).toBeTruthy();
     expect(screen.getByText(/workflow implementation not yet complete/i)).toBeTruthy();
   });
