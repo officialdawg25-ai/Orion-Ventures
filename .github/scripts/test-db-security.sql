@@ -8,6 +8,7 @@ on conflict (id) do nothing;
 
 set role authenticated;
 select set_config('request.jwt.claim.sub', '10000000-0000-4000-8000-000000000001', false);
+select auth.uid() as current_test_user, current_setting('request.jwt.claim.sub', true) as current_test_claim;
 insert into public.portfolios (name, created_by) values ('Portfolio One', '10000000-0000-4000-8000-000000000001') returning id \gset p1_
 insert into public.ventures (portfolio_id, name) values (:'p1_id', 'Venture One') returning id \gset v1_
 select exists (
