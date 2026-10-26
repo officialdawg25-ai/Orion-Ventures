@@ -14,7 +14,7 @@ describe("PasswordRecoveryPanel", () => {
 
   it("rejects mismatched passwords without sending an update", async () => {
     render(<PasswordRecoveryPanel onComplete={vi.fn()} />);
-    fireEvent.change(screen.getByLabelText("New password"), { target: { value: "new-strong-password-123" } });
+    fireEvent.change(screen.getByLabelText(/New password/), { target: { value: "new-strong-password-123" } });
     fireEvent.change(screen.getByLabelText("Confirm new password"), { target: { value: "different-password-123" } });
     fireEvent.click(screen.getByRole("button", { name: /update password/i }));
 
@@ -25,7 +25,7 @@ describe("PasswordRecoveryPanel", () => {
   it("updates the password and returns to the workspace after success", async () => {
     const onComplete = vi.fn();
     render(<PasswordRecoveryPanel onComplete={onComplete} />);
-    fireEvent.change(screen.getByLabelText("New password"), { target: { value: "new-strong-password-123" } });
+    fireEvent.change(screen.getByLabelText(/New password/), { target: { value: "new-strong-password-123" } });
     fireEvent.change(screen.getByLabelText("Confirm new password"), { target: { value: "new-strong-password-123" } });
     fireEvent.click(screen.getByRole("button", { name: /update password/i }));
 
