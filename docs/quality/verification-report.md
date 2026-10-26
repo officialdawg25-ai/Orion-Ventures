@@ -43,7 +43,7 @@ In a later run, the disposable PostgreSQL database job passed these checks:
 - The existing event trigger still enables RLS on a newly created table after that revocation.
 - RLS is enabled on all nine initial application/stage-gate tables in the test fixture.
 
-The overall workflow run failed because the new authentication component tests used an overly exact label selector. That selector has been corrected, but a new complete CI run is required before declaring the entire workflow green.
+The overall workflow run that introduced the authentication tests failed because the password label selector was overly exact. The selector has been corrected, and additional tests now cover password-reset requests and recovery completion. A new complete CI run is required before declaring the entire workflow green.
 
 ## Not yet verified / release blockers
 
