@@ -53,7 +53,7 @@ create table if not exists public.ventures (
 create table if not exists public.evidence_items (
   id uuid primary key default gen_random_uuid(),
   portfolio_id uuid not null references public.portfolios(id) on delete cascade,
-  venture_id uuid references public.ventures(id) on delete set null,
+  venture_id uuid,
   title text not null check (char_length(trim(title)) between 1 and 200),
   evidence_type text not null check (evidence_type in ('customer_interview', 'experiment', 'sales_record', 'market_research', 'competitor_research', 'financial_record', 'operational_record', 'document', 'other')),
   source_url text check (source_url is null or char_length(source_url) <= 2048),
@@ -65,6 +65,7 @@ create table if not exists public.evidence_items (
   created_by uuid not null default auth.uid() references auth.users(id),
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now(),
+  unique (portfolio_id, id),
   constraint evidence_venture_same_portfolio foreign key (portfolio_id, venture_id)
     references public.ventures (portfolio_id, id) on delete set null (venture_id)
 );
@@ -84,6 +85,7 @@ create table if not exists public.decisions (
   created_by uuid not null default auth.uid() references auth.users(id),
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now(),
+  unique (portfolio_id, id),
   constraint decisions_venture_same_portfolio foreign key (portfolio_id, venture_id)
     references public.ventures (portfolio_id, id) on delete set null (venture_id)
 );
@@ -300,7 +302,7 @@ alter table public.audit_events enable row level security;
 -- Remove any default API grants, then grant only the operations used by the client.
 revoke all on public.profiles, public.portfolios, public.portfolio_memberships,
   public.ventures, public.evidence_items, public.decisions, public.audit_events
-from anon, authenticated;
+from public, anon, authenticated;
 
 grant select on public.profiles to authenticated;
 grant update (display_name) on public.profiles to authenticated;
@@ -308,9 +310,9 @@ grant select on public.portfolios to authenticated;
 grant insert (name, created_by, base_currency) on public.portfolios to authenticated;
 grant select on public.portfolio_memberships to authenticated;
 grant select on public.ventures to authenticated;
-grant insert (portfolio_id, name, description, venture_type, lifecycle_stage, status, accountable_owner, currency_code, created_by)
+grant insert (portfolio_id, name, description, venture_type, accountable_owner, currency_code, created_by)
   on public.ventures to authenticated;
-grant update (name, description, venture_type, lifecycle_stage, status, accountable_owner, currency_code)
+grant update (name, description, venture_type, accountable_owner, currency_code)
   on public.ventures to authenticated;
 grant select on public.evidence_items to authenticated;
 grant insert (portfolio_id, venture_id, title, evidence_type, source_url, source_reference, observed_at, confidence, limitations, created_by)
@@ -318,9 +320,9 @@ grant insert (portfolio_id, venture_id, title, evidence_type, source_url, source
 grant update (venture_id, title, evidence_type, source_url, source_reference, observed_at, confidence, limitations)
   on public.evidence_items to authenticated;
 grant select on public.decisions to authenticated;
-grant insert (portfolio_id, venture_id, title, decision_type, rationale, alternatives_considered, status, decided_by, decided_at, review_at, created_by)
+grant insert (portfolio_id, venture_id, title, decision_type, rationale, alternatives_considered, review_at, created_by)
   on public.decisions to authenticated;
-grant update (venture_id, title, decision_type, rationale, alternatives_considered, status, decided_by, decided_at, review_at)
+grant update (venture_id, title, decision_type, rationale, alternatives_considered, review_at)
   on public.decisions to authenticated;
 grant select on public.audit_events to authenticated;
 
