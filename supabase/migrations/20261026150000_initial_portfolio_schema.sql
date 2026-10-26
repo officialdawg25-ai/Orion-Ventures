@@ -73,7 +73,7 @@ create table if not exists public.evidence_items (
 create table if not exists public.decisions (
   id uuid primary key default gen_random_uuid(),
   portfolio_id uuid not null references public.portfolios(id) on delete cascade,
-  venture_id uuid references public.ventures(id) on delete set null,
+  venture_id uuid,
   title text not null check (char_length(trim(title)) between 1 and 200),
   decision_type text not null check (decision_type in ('pass', 'hold', 'revise', 'grow', 'maintain', 'repair', 'pause', 'restructure', 'sell', 'close', 'other')),
   rationale text not null check (char_length(trim(rationale)) between 1 and 10000),
