@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState, type FormEvent } from "react";
 import {
-  ArrowRight, ArrowUpRight, BriefcaseBusiness, CheckCircle2, ChevronDown,
+  Activity, ArrowRight, ArrowUpRight, BriefcaseBusiness, CheckCircle2, ChevronDown,
   CircleHelp, FileText, Gauge, Layers3, LogOut, ShieldCheck, Target, Wallet,
 } from "lucide-react";
 import type { User } from "@supabase/supabase-js";
