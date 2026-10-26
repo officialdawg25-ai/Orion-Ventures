@@ -6,6 +6,7 @@ import AuthPanel from "./AuthPanel";
 const authMocks = vi.hoisted(() => ({
   signInWithPassword: vi.fn(),
   signUp: vi.fn(),
+  resetPasswordForEmail: vi.fn(),
 }));
 
 vi.mock("../lib/supabase", () => ({
@@ -17,6 +18,7 @@ describe("AuthPanel", () => {
     vi.clearAllMocks();
     authMocks.signInWithPassword.mockResolvedValue({ error: null });
     authMocks.signUp.mockResolvedValue({ data: { session: null }, error: null });
+    authMocks.resetPasswordForEmail.mockResolvedValue({ error: null });
   });
 
   it("submits trimmed email credentials to Supabase Auth", async () => {
@@ -59,3 +61,16 @@ describe("AuthPanel", () => {
     expect(screen.queryByText(/private provider details/i)).toBeNull();
   });
 });
+
+  it("requests password recovery without disclosing whether an account exists", async () => {
+    render(<AuthPanel />);
+    fireEvent.click(screen.getByRole("button", { name: /forgot password/i }));
+    fireEvent.change(screen.getByLabelText("Email address"), { target: { value: "user@example.com" } });
+    fireEvent.click(screen.getByRole("button", { name: /send reset link/i }));
+
+    await waitFor(() => expect(authMocks.resetPasswordForEmail).toHaveBeenCalledWith(
+      "user@example.com",
+      { redirectTo: window.location.origin },
+    ));
+    expect(await screen.findByRole("status")).toHaveTextContent(/if an account exists/i);
+  });
