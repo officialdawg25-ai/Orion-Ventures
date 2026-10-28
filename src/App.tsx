@@ -42,7 +42,7 @@ export default function App() {
   const client = supabase;
 
   if (loading) {
-    return <main className="auth-shell"><section className="auth-card" aria-live="polite"><p className="eyebrow">DAWG 360° · SECURE WORKSPACE</p><h1>Preparing your workspace</h1><p>Checking your signed-in session…</p></section></main>;
+    return <main className="auth-shell"><section className="auth-card" aria-live="polite"><p className="eyebrow">Orion Ventures · SECURE WORKSPACE</p><h1>Preparing your workspace</h1><p>Checking your signed-in session…</p></section></main>;
   }
 
   if (!session?.user) return <AuthPanel />;
