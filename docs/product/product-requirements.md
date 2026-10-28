@@ -1,11 +1,11 @@
-# Product Requirements — DAWG 360° MPOS
+# Product Requirements — Orion Ventures Operating System (OVOS)
 
 **Version:** 0.1 foundation draft  
 **Status:** Requirements drafted; implementation is partial.
 
 ## Product promise
 
-Give a multipreneur a single, trustworthy operating view of a diverse venture portfolio: what is real, what is uncertain, what needs attention, where cash and owner time are committed, and which next decision is justified by the evidence.
+Give Orion Ventures, the holding company, a single trustworthy operating view of its venture portfolio: what is verified, what is uncertain, what needs attention, where capital and management time are committed, and which next decision is justified by evidence.
 
 The product is not a generic project dashboard, spreadsheet clone, accounting replacement, or AI that autonomously decides the fate of businesses.
 
