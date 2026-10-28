@@ -19,6 +19,8 @@
 
 ## Current branch implementation
 
+**Branding update:** The branch `branding/orion-ventures-holding-company` applies the holding-company identity and product name Orion Ventures Operating System (OVOS). This is a source change only; it does not establish a verified deployment.
+
 The branch `docs/mpos-phase-zero-architecture` contains:
 - React/TypeScript/Vite application shell with an explicit unconnected preview.
 - Supabase email/password authentication gate using browser-safe public configuration only.

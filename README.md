@@ -1,6 +1,6 @@
-# DAWG 360° — Multipreneur Portfolio Operating System
+# Orion Ventures Operating System (OVOS)
 
-DAWG 360° is an evidence-led operating system for managing a portfolio of ventures. It helps an owner decide what to validate, launch, grow, maintain, repair, pause, restructure, sell or close — with traceable evidence behind material decisions.
+Orion Ventures is the holding company. The Orion Ventures Operating System (OVOS) is its central operating platform for governing the portfolio, allocating capital and owner attention, and deciding what to validate, launch, grow, maintain, repair, pause, restructure, sell or close. Material decisions must be traceable to evidence.
 
 ## Current status
 

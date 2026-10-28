@@ -244,8 +244,8 @@ export default function ConnectedWorkspace({ user, onSignOut }: { user: User; on
   return (
     <div className="app-frame">
       <aside className="sidebar">
-        <a className="brand" href="#overview" onClick={() => setSection("Overview")} aria-label="DAWG 360 home">
-          <span className="brand-mark">D</span><span className="brand-copy"><strong>DAWG 360°</strong><small>VENTURE PORTFOLIO</small></span>
+        <a className="brand" href="#overview" onClick={() => setSection("Overview")} aria-label="Orion Ventures home">
+          <span className="brand-mark">D</span><span className="brand-copy"><strong>Orion Ventures</strong><small>HOLDING COMPANY OS</small></span>
         </a>
         <label className="workspace-picker-label" htmlFor="portfolio-picker">PORTFOLIO WORKSPACE</label>
         <div className="workspace-switcher connected-switcher">
@@ -413,7 +413,7 @@ export default function ConnectedWorkspace({ user, onSignOut }: { user: User; on
               {decisions.length ? <div className="record-list">{decisions.map((decision) => <article className="venture-record" key={decision.id}><div className="record-row-main"><strong>{decision.title}</strong><span className="quiet-tag">{decision.status}</span></div><p>{decision.rationale}</p><div className="record-meta"><span>{decision.decision_type}</span><span>{dateLabel(decision.review_at)}</span></div></article>)}</div> : <Empty message="No decisions recorded yet." />}
             </section>
           )}
-          <footer className="page-footer"><span>DAWG 360° <span className="footer-dot">·</span> Portfolio operating system</span><span><ShieldCheck size={13} /> Access enforced by database policies</span></footer>
+          <footer className="page-footer"><span>Orion Ventures <span className="footer-dot">·</span> Portfolio operating system</span><span><ShieldCheck size={13} /> Access enforced by database policies</span></footer>
         </section>
       </main>
     </div>

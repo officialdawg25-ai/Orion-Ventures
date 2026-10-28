@@ -59,9 +59,9 @@ export default function AuthPanel() {
   return (
     <main className="auth-shell">
       <section className="auth-card" aria-labelledby="auth-title">
-        <a className="brand auth-brand" href="/" aria-label="DAWG 360 home">
+        <a className="brand auth-brand" href="/" aria-label="Orion Ventures home">
           <span className="brand-mark">D</span>
-          <span className="brand-copy"><strong>DAWG 360°</strong><small>VENTURE PORTFOLIO</small></span>
+          <span className="brand-copy"><strong>Orion Ventures</strong><small>HOLDING COMPANY OS</small></span>
         </a>
         <p className="eyebrow">EVIDENCE BEFORE SCALE</p>
         <h1 id="auth-title">{mode === "signin" ? "Your portfolio, governed." : mode === "signup" ? "Create your workspace." : "Reset your password."}</h1>
@@ -88,7 +88,7 @@ export default function AuthPanel() {
         </form>
         {mode === "signin" && <p className="auth-switch auth-forgot"><button type="button" onClick={() => { setMode("reset"); setError(""); setMessage(""); }}>Forgot password?</button></p>}
         <p className="auth-switch">
-          {mode === "signin" ? "New to DAWG 360°?" : mode === "signup" ? "Already have an account?" : "Remembered your password?"}{" "}
+          {mode === "signin" ? "New to Orion Ventures?" : mode === "signup" ? "Already have an account?" : "Remembered your password?"}{" "}
           <button type="button" onClick={() => { setMode(mode === "signin" ? "signup" : "signin"); setError(""); setMessage(""); }}>
             {mode === "signin" ? "Create an account" : "Back to sign in"}
           </button>

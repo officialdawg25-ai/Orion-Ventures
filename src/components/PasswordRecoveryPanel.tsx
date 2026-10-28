@@ -42,9 +42,9 @@ export default function PasswordRecoveryPanel({ onComplete }: { onComplete: () =
   return (
     <main className="auth-shell">
       <section className="auth-card" aria-labelledby="recovery-title">
-        <a className="brand auth-brand" href="/" aria-label="DAWG 360 home">
+        <a className="brand auth-brand" href="/" aria-label="Orion Ventures home">
           <span className="brand-mark">D</span>
-          <span className="brand-copy"><strong>DAWG 360°</strong><small>VENTURE PORTFOLIO</small></span>
+          <span className="brand-copy"><strong>Orion Ventures</strong><small>HOLDING COMPANY OS</small></span>
         </a>
         <p className="eyebrow">ACCOUNT RECOVERY</p>
         <h1 id="recovery-title">{saved ? "Password updated." : "Choose a new password."}</h1>
