@@ -1,13 +1,13 @@
-# DAWG 360° MPOS — System Architecture
+# Orion Ventures Operating System (OVOS) — System Architecture
 
 **Status:** Proposed architecture; implementation is partial.  
 **Repository:** `officialdawg25-ai/Orion-Ventures`  
-**Development branch:** `docs/mpos-phase-zero-architecture`  
+**Branding implementation branch:** `branding/orion-ventures-holding-company` (based on `main`)  
 **Production status:** Not deployed as an application.
 
 ## Product objective
 
-DAWG 360° is an evidence-led operating system for a portfolio of ventures. It helps an owner decide what to validate, launch, grow, maintain, repair, pause, restructure, sell, or close. Every material indicator must trace to a source record, calculation, timestamp, and definition.
+Orion Ventures is the holding company. The Orion Ventures Operating System (OVOS) is the central operating platform for governing its portfolio and deciding what to validate, launch, grow, maintain, repair, pause, restructure, sell, or close. Every material indicator must trace to a source record, calculation, timestamp, and definition.
 
 ## Architecture principles
 
