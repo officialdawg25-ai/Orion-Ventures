@@ -58,9 +58,9 @@ function PreviewWorkspace() {
   return (
     <div className="app-frame">
       <aside className="sidebar">
-        <a className="brand" href="#overview" onClick={() => setActiveSection("Overview")} aria-label="DAWG 360 home">
+        <a className="brand" href="#overview" onClick={() => setActiveSection("Overview")} aria-label="Orion Ventures home">
           <span className="brand-mark">D</span>
-          <span className="brand-copy"><strong>DAWG 360°</strong><small>VENTURE PORTFOLIO</small></span>
+          <span className="brand-copy"><strong>Orion Ventures</strong><small>HOLDING COMPANY OS</small></span>
         </a>
 
         <div className="workspace-switcher">
@@ -196,7 +196,7 @@ function PreviewWorkspace() {
           )}
 
           <footer className="page-footer">
-            <span>DAWG 360° <span className="footer-dot">·</span> Portfolio operating system</span>
+            <span>Orion Ventures <span className="footer-dot">·</span> Portfolio operating system</span>
             <span><LockKeyhole size={13} /> Evidence-led by design</span>
           </footer>
         </section>
